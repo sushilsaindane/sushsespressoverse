@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sush's Espressoverse - A HiBREW H10B Guide</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Manrope:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        /* ---------------------------------- */
+        /* GLOBAL STYLES             */
+        /* ---------------------------------- */
+        :root {
+            --color-espresso: #3a2826;
+            --color-latte: #f3ede4;
+            --color-zest: #e57f33;
+            --color-dark-text: #2c1f1d;
+            --color-light-text: #e2d9d1;
+        }
+
+        body {
+            background-color: #000; /* Start with black for the initial load */
+            color: var(--color-dark-text);
+            font-family: 'Manrope', sans-serif;
+            cursor: none;
+            overflow-x: hidden;
+        }
+
+        .font-serif { font-family: 'Playfair Display', serif; }
+
+        [v-cloak] { display: none; }
+
+        /* ---------------------------------- */
+        /* CUSTOM CURSOR (JS Controlled)    */
+        /* ---------------------------------- */
+        .cursor-dot, .cursor-outline {
+            pointer-events: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            border-radius: 50%;
+            z-index: 9999;
+            opacity: 0; /* Start hidden, GSAP will reveal it */
+            transform: translate(-50%, -50%);
+        }
+        .cursor-dot {
+            width: 8px;
+            height: 8px;
+            background-color: var(--color-zest);
+        }
+        .cursor-outline {
+            width: 40px;
+            height: 40px;
+            background-color: rgba(229, 127, 51, 0.3);
+        }
+
+        /* ---------------------------------- */
+        /* UI COMPONENTS             */
+        /* ---------------------------------- */
+        .generator-option-btn {
+            width: 100%; padding: 0.75rem 1rem; border-radius: 0.5rem; border: 2px solid rgba(255, 255, 255, 0.2); background-color: rgba(0, 0, 0, 0.2); color: var(--color-light-text); text-align: center; font-weight: 500; cursor: none; outline: none; transform: scale(1); transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+        .generator-option-btn:hover {
+            transform: scale(1.05); border-color: var(--color-zest); box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+        .generator-option-btn.selected {
+            background-color: var(--color-zest); border-color: var(--color-zest); color: var(--color-espresso); font-weight: 700; transform: scale(1.08); box-shadow: 0 8px 25px -5px rgba(229, 127, 51, 0.5);
+        }
+        .custom-select-wrapper { position: relative; width: 100%; cursor: none; }
+        .custom-select-wrapper::after { content: '›'; font-family: 'Playfair Display', serif; font-size: 2rem; font-weight: 900; color: var(--color-zest); position: absolute; top: 50%; right: 0.8rem; transform: translateY(-50%) rotate(90deg); pointer-events: none; transition: transform 0.2s ease-in-out; }
+        .custom-select-wrapper:hover::after { transform: translateY(-50%) rotate(90deg) scale(1.2); }
+        select.generator-option-btn, input.generator-option-btn { -webkit-appearance: none; -moz-appearance: none; appearance: none; padding-right: 2.5rem; text-align: left; background-color: var(--color-espresso); cursor: none;}
+        
+        .generate-btn { width: 100%; padding: 1rem; border-radius: 0.75rem; font-family: 'Playfair Display', serif; font-size: 1.25rem; font-weight: 700; letter-spacing: 1px; background-color: var(--color-zest); color: var(--color-espresso); border: none; cursor: none; transform: scale(1); transition: all 0.2s ease-in-out; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+        .generate-btn:hover:not(:disabled) { transform: scale(1.02); box-shadow: 0 10px 30px -5px rgba(229, 127, 51, 0.6); }
+        .generate-btn:disabled { background-color: #555; color: #999; cursor: not-allowed; opacity: 0.6; }
+        .glassmorphism { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .recipe-display, .caffeine-drink-item, .caffeine-calculator-wrapper { animation: fadeIn 0.8s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to   { opacity: 1; transform: translateY(0); } }
+        
+        .impact-bar-container {
+            width: 100%; background-color: rgba(0,0,0,0.3); border-radius: 8px; overflow: hidden; height: 16px; border: 1px solid rgba(255,255,255,0.1);
+        }
+        .impact-bar {
+            height: 100%; border-radius: 8px; transition: width 0.5s ease-out, background-color 0.5s ease-out;
+        }
+    </style>
+</head>
+<body class="antialiased">
+    <div class="cursor-dot"></div>
+    <div class="cursor-outline"></div>
+
+    <div id="app" v-cloak>
+        <!-- HERO -->
+        <section data-bgcolor="#000000" class="h-screen text-white flex flex-col items-center justify-center p-4 relative">
+            <div class="absolute inset-0 overflow-hidden">
+                <iframe class="absolute top-1/2 left-1/2 min-w-full min-h-full w-auto h-auto -translate-x-1/2 -translate-y-1/2" src="https://www.youtube.com/embed/lAd3LYIZMjs?autoplay=1&mute=1&loop=1&playlist=lAd3LYIZMjs&controls=0&showinfo=0&modestbranding=1&iv_load_policy=3&rel=0" frameborder="0" allow="autoplay; encrypted-media"></iframe>
+            </div>
+            <div class="absolute inset-0 bg-black opacity-60"></div>
+            <div class="relative text-center z-10">
+                <h1 class="main-title font-serif text-6xl md:text-9xl font-black">Espressoverse</h1>
+                <p class="main-subtitle mt-4 text-lg md:text-2xl text-gray-200 max-w-2x2">A complete guide to mastering your Home Espresso Machine.</p>
+                <div class="main-subtitle mt-8 text-sm tracking-widest animate-bounce">Scroll to Explore</div>
+            </div>
+        </section>
+
+        <!-- CHAPTER 1: THE FIRST BREW -->
+        <section data-bgcolor="#3a2826" class="py-24 px-4 text-light-text">
+            <div class="container mx-auto text-center max-w-4xl">
+                <div class="content-animate">
+                    <h2 class="title-animate font-serif text-5xl md:text-6xl font-black mb-4 text-white">1. The First Brew</h2>
+                    <p class="text-animate text-xl text-gray-300 mb-12">Before you craft your masterpiece, every machine needs a clean start. This is the most important first step.</p>
+                </div>
+                <div class="grid md:grid-cols-3 gap-8 text-left card-stagger">
+                    <div class="bg-black/20 p-8 rounded-lg border border-white/10"><div class="text-zest font-serif text-4xl mb-3">01.</div><h3 class="font-bold text-xl mb-2 text-gray-100">Wash & Rinse</h3><p class="text-gray-400">Thoroughly wash all removable parts with warm water to remove any factory dust.</p></div>
+                    <div class="bg-black/20 p-8 rounded-lg border border-white/10"><div class="text-zest font-serif text-4xl mb-3">02.</div><h3 class="font-bold text-xl mb-2 text-gray-100">Flush System</h3><p class="text-gray-400">Run 3-4 full cycles of hot water through the group head and steam wand.</p></div>
+                    <div class="bg-black/20 p-8 rounded-lg border border-white/10"><div class="text-zest font-serif text-4xl mb-3">03.</div><h3 class="font-bold text-xl mb-2 text-gray-100">Sacrifice a Shot</h3><p class="text-gray-400">Pull one "throwaway" shot to season the machine and discard it.</p></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- CHAPTER 2: THE PERFECT BREW -->
+        <section data-bgcolor="#3a2826" class="py-24 px-4 text-light-text">
+            <div class="container mx-auto text-center max-w-4xl">
+                <div class="content-animate">
+                    <h2 class="title-animate font-serif text-5xl md:text-6xl font-black mb-4 text-white">2. The Perfect Brew</h2>
+                    <p class="text-animate text-xl text-gray-300 mb-12">Dialing in the perfect espresso shot is a ritual. These core steps separate a good coffee from a truly exceptional one.</p>
+                </div>
+                <div class="grid md:grid-cols-3 gap-8 text-left card-stagger">
+                    <div class="bg-black/20 p-8 rounded-lg border border-white/10"><div class="text-zest font-serif text-4xl mb-3">01.</div><h3 class="font-bold text-xl mb-2 text-gray-100">Preheat & Prepare</h3><p class="text-gray-400">Lock in your empty portafilter and run a blank shot into your cup. This warms the group head, portafilter, and cup, ensuring temperature stability.</p></div>
+                    <div class="bg-black/20 p-8 rounded-lg border border-white/10"><div class="text-zest font-serif text-4xl mb-3">02.</div><h3 class="font-bold text-xl mb-2 text-gray-100">Dose & Tamp</h3><p class="text-gray-400">Dry the basket. Grind and dose 18g of fresh coffee for a double shot. Distribute the grounds evenly and tamp with firm, level pressure.</p></div>
+                    <div class="bg-black/20 p-8 rounded-lg border border-white/10"><div class="text-zest font-serif text-4xl mb-3">03.</div><h3 class="font-bold text-xl mb-2 text-gray-100">Extract & Enjoy</h3><p class="text-gray-400">Lock the portafilter in and start the shot immediately. Aim for a 25-30 second extraction that yields about 36g of liquid espresso.</p></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- CHAPTER 3: RECIPE LAB -->
+        <section data-bgcolor="#3a2826" class="py-24 px-4 text-light-text">
+            <div class="container mx-auto max-w-5xl">
+                <div class="content-animate">
+                    <h2 class="title-animate font-serif text-5xl md:text-6xl text-white font-black mb-4 text-center">3. The Recipe & Caffeine Lab</h2>
+                    <p class="text-animate text-xl text-gray-300 mb-8 text-center max-w-3xl mx-auto">Design your perfect drink, then see its impact on your sleep schedule.</p>
+                     <div class="text-center mb-12">
+                        <div class="inline-flex rounded-md shadow-sm bg-black/20 border border-white/10" role="group">
+                          <button @click="setUnitSystem('imperial')" type="button" :class="unitSystem === 'imperial' ? 'selected' : ''" class="generator-option-btn !rounded-r-none !w-auto">fl oz</button>
+                          <button @click="setUnitSystem('metric')" type="button" :class="unitSystem === 'metric' ? 'selected' : ''" class="generator-option-btn !rounded-l-none !w-auto">ml / g</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="rounded-2xl border border-white/10 shadow-2xl p-6 md:p-10 card-stagger">
+                    <div class="grid md:grid-cols-2 gap-8 md:gap-12">
+                        <div class="space-y-6">
+                            <div><label class="block text-sm font-medium text-gray-300 mb-2 font-serif tracking-wider">Step 1: Category</label><div class="grid grid-cols-3 gap-3"><button @click="setCategory('hot')" :class="{ 'selected': category === 'hot' }" class="generator-option-btn">Hot</button><button @click="setCategory('cold')" :class="{ 'selected': category === 'cold' }" class="generator-option-btn">Cold</button><button @click="setCategory('cocktails')" :class="{ 'selected': category === 'cocktails' }" class="generator-option-btn">Cocktails</button></div></div>
+                            <div v-if="category"><label class="block text-sm font-medium text-gray-300 mb-2 font-serif tracking-wider">Step 2: Drink</label><div class="grid grid-cols-2 gap-3"><button v-for="drink in availableDrinks" :key="drink.key" @click="setDrink(drink.key)" :class="{ 'selected': drinkKey === drink.key }" class="generator-option-btn">{{ drink.value.name }}</button></div></div>
+                            <div v-if="drinkKey"><label class="block text-sm font-medium text-gray-300 mb-2 font-serif tracking-wider">Step 3: Shot</label><div class="grid grid-cols-2 gap-3"><button @click="setShot('single')" :class="{ 'selected': shot === 'single' }" class="generator-option-btn">Single</button><button @click="setShot('double')" :class="{ 'selected': shot === 'double' }" class="generator-option-btn">Double</button></div></div>
+                            <div v-if="currentDrinkNeeds.length > 0"><label class="block text-sm font-medium text-gray-300 mb-2 font-serif tracking-wider">Step 4: Customise</label><div class="space-y-3"><div class="custom-select-wrapper" v-if="currentDrinkNeeds.includes('milk')"><select v-model="extras.milk" class="generator-option-btn"><option value="whole">Whole Milk</option><option value="skim">Skim Milk</option><option value="oat">Oat Milk</option><option value="almond">Almond Milk</option></select></div><div class="custom-select-wrapper" v-if="currentDrinkNeeds.includes('iceCream')"><select v-model="extras.iceCream" class="generator-option-btn"><option value="vanilla">Vanilla Ice Cream</option><option value="chocolate">Chocolate Ice Cream</option><option value="caramel">Caramel Ice Cream</option></select></div><div class="custom-select-wrapper" v-if="currentDrinkNeeds.includes('spirit')"><select v-model="extras.spirit" class="generator-option-btn"><option>Vodka</option><option>Irish Whiskey</option><option>Tequila</option><option>Rum</option></select></div><div class="custom-select-wrapper" v-if="currentDrinkNeeds.includes('liqueur')"><select v-model="extras.liqueur" class="generator-option-btn"><option>Coffee Liqueur</option><option>Grappa</option><option>Amaretto</option></select></div><div class="custom-select-wrapper" v-if="currentDrinkNeeds.includes('mixer')"><select v-model="extras.mixer" class="generator-option-btn"><option>Tonic Water</option></select></div></div></div>
+                        </div>
+                        <div class="bg-black/20 rounded-lg p-6 min-h-[300px] flex flex-col justify-center glassmorphism"><div v-if="!recipeGenerated" class="text-center text-gray-400"><svg class="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg><h3 class="mt-2 text-lg font-medium">Your recipe awaits.</h3><p class="mt-1 text-sm">Make selections to begin.</p></div><div v-else class="recipe-display"><img :src="generatedRecipe.imageUrl" :alt="generatedRecipe.title" class="w-full h-48 object-cover rounded-lg mb-4"><h3 class="font-serif text-3xl font-bold text-zest mb-2">{{ generatedRecipe.title }}</h3><div class="mb-4 text-sm text-gray-300"><span>{{ generatedRecipe.info }}</span></div><ol class="space-y-2 text-sm"><li v-for="step in generatedRecipe.steps" class="text-gray-200 flex items-start"><span class="mr-2 text-zest font-bold">&#10003;</span>{{ step }}</li></ol></div></div>
+                    </div>
+                    <div class="pt-6 mt-6 border-t border-white/10"><button @click="generateRecipe" :disabled="!canGenerate" class="generate-btn">Generate Recipe</button></div>
+                </div>
+
+                <!-- NEW: CAFFEINE CALCULATOR (POPS UP) -->
+                <div v-if="recipeGenerated" class="mt-16 caffeine-calculator-wrapper">
+                     <div class="grid md:grid-cols-2 gap-8 items-start">
+                        <!-- Left Side: Inputs -->
+                        <div class="bg-black/20 p-8 rounded-lg border border-white/10 space-y-6">
+                            <h3 class="font-serif text-2xl text-gray-300 text-center">Add to Sleep Schedule</h3>
+                            <p class="text-center text-gray-400 text-sm -mt-4">Adding: <strong class="text-zest">{{ generatedRecipe.title }}</strong></p>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-300 mb-2 font-serif tracking-wider">Time Consumed</label>
+                                <div class="grid grid-cols-3 gap-2">
+                                    <div class="custom-select-wrapper"><select v-model="consumedTime.hour" class="generator-option-btn"><option v-for="h in 12">{{ h }}</option></select></div>
+                                    <div class="custom-select-wrapper"><select v-model="consumedTime.minute" class="generator-option-btn"><option v-for="m in 60">{{ (m-1).toString().padStart(2, '0') }}</option></select></div>
+                                    <div class="custom-select-wrapper"><select v-model="consumedTime.ampm" class="generator-option-btn"><option>AM</option><option>PM</option></select></div>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-300 mb-2 font-serif tracking-wider">Bedtime</label>
+                                <div class="grid grid-cols-3 gap-2">
+                                    <div class="custom-select-wrapper"><select v-model="bedtime.hour" class="generator-option-btn"><option v-for="h in 12">{{ h }}</option></select></div>
+                                    <div class="custom-select-wrapper"><select v-model="bedtime.minute" class="generator-option-btn"><option v-for="m in 60">{{ (m-1).toString().padStart(2, '0') }}</option></select></div>
+                                    <div class="custom-select-wrapper"><select v-model="bedtime.ampm" class="generator-option-btn"><option>AM</option><option>PM</option></select></div>
+                                </div>
+                            </div>
+                            <button @click="addCaffeineDrink" class="generate-btn w-full !bg-opacity-80">Add to Schedule</button>
+                        </div>
+                        <!-- Right Side: Results -->
+                        <div class="space-y-8">
+                            <div class="bg-black/20 p-8 rounded-lg border border-white/10">
+                                <h3 class="font-serif text-2xl mb-4 text-gray-300">Sleep Impact Analysis</h3>
+                                <div class="space-y-4">
+                                    <div>
+                                        <div class="flex justify-between items-baseline mb-1">
+                                            <span class="text-sm font-medium text-gray-300">Caffeine at Bedtime</span>
+                                            <span class="text-2xl font-bold text-zest">{{ caffeineAtBedtime.toFixed(1) }}mg</span>
+                                        </div>
+                                        <div class="impact-bar-container">
+                                            <div class="impact-bar" :style="{ width: bedtimeImpact.percentage + '%', backgroundColor: bedtimeImpact.color }"></div>
+                                        </div>
+                                    </div>
+                                    <div class="text-center pt-4 space-y-2">
+                                         <div>
+                                            <div class="text-gray-400 text-sm">You can expect to feel sleepy around:</div>
+                                            <div class="text-xl font-bold text-light-text">{{ feelSleepyTime }}</div>
+                                        </div>
+                                        <div>
+                                            <div class="text-gray-400 text-sm">Caffeine should be clear from your system by:</div>
+                                            <div class="text-xl font-bold text-light-text">{{ caffeineClearTime }}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <ul v-if="userDrinks.length > 0" class="mt-6 pt-4 border-t border-white/10 space-y-3">
+                                    <li v-for="(drink, index) in userDrinks" :key="index" class="caffeine-drink-item flex justify-between items-center text-sm bg-black/20 p-3 rounded-md">
+                                        <span>1x {{ drink.name }} at {{ formatTime(drink.time) }}</span>
+                                        <button @click="removeCaffeineDrink(index)" class="text-red-400 hover:text-red-300 text-2xl leading-none">&times;</button>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- CHAPTER 4: THE ART OF MILK -->
+        <section data-bgcolor="#f3ede4" class="py-24 px-4">
+            <div class="container mx-auto max-w-4xl text-center">
+                <div class="content-animate">
+                    <h2 class="title-animate font-serif text-5xl md:text-6xl font-black mb-4 text-espresso">4. The Art of Milk: A Masterclass</h2>
+                    <p class="text-animate text-xl text-gray-700 mb-12 max-w-3xl mx-auto">This is where science meets art. To truly master milk steaming, let's learn from one of the best. Here is James Hoffmann's definitive guide, "Everything You Need To Know To Steam Great Milk."</p>
+                </div>
+                <div class="image-animate rounded-2xl shadow-2xl overflow-hidden aspect-video">
+                     <iframe class="w-full h-full" src="https://www.youtube.com/embed/oaKRBBpA4fw" title="Everything You Need To Know To Steam Great Milk" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+                </div>
+            </div>
+        </section>
+        
+        <!-- FOOTER -->
+        <footer data-bgcolor="#000000" class="py-24 px-4 text-center text-light-text">
+            <div class="content-animate">
+                <h2 class="title-animate font-serif text-4xl">Happy Brewing</h2>
+                <p class="text-animate text-gray-400 mt-2">Made with ❤️ by an ameteur coffee enthusiast</p>
+                <p class="text-animate text-gray-400 mt-2">Sushi Saindane☕</p>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@studio-freight/lenis"></script>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const { createApp, ref, computed, onMounted, watch } = Vue;
+
+        const app = createApp({
+            setup() {
+                // --- SHARED STATE ---
+                const unitSystem = ref('imperial'); 
+                const setUnitSystem = (system) => { unitSystem.value = system; };
+
+                // --- RECIPE LAB STATE & LOGIC ---
+                const recipes = { 
+                    hot: { 
+                        espresso: { name: "Espresso", needs: [], imageUrl: 'https://www.sharmispassions.com/wp-content/uploads/2012/07/espresso-coffee-recipe022.jpg' }, 
+                        cappuccino: { name: "Cappuccino", needs: ['milk'], imageUrl: 'https://images.pexels.com/photos/302904/pexels-photo-302904.jpeg' }, 
+                        latte: { name: "Latte", needs: ['milk'], imageUrl: 'https://images.pexels.com/photos/1036444/pexels-photo-1036444.jpeg' }, 
+                        flatWhite: { name: "Flat White", needs: ['milk'], imageUrl: 'https://images.pexels.com/photos/33669196/pexels-photo-33669196.jpeg' }, 
+                        macchiato: { name: "Macchiato", needs: ['milk'], imageUrl: 'https://tchibo.us/cdn/shop/articles/macchiatooo.jpg?v=1694700172&width=1400' }, 
+                        americano: { name: "Americano", needs: [], imageUrl: 'https://assets.beanbox.com/blog_images/AB7ud4YSE6nmOX0iGlgA.jpeg' } 
+                    }, 
+                    cold: { 
+                        icedLatte: { name: "Iced Latte", needs: ['milk'], imageUrl: 'https://buildyourbite.com/wp-content/uploads/2024/04/Iced-Latte-Recipe-59.jpg' }, 
+                        icedAmericano: { name: "Iced Americano", needs: [], imageUrl: 'https://mocktail.net/wp-content/uploads/2022/03/homemade-Iced-Americano-recipe_1.jpg' }, 
+                        espressoTonic: { name: "Espresso Tonic", needs: ['mixer'], imageUrl: 'https://images.immediate.co.uk/production/volatile/sites/30/2022/03/espresso-and-tonic-1a0b904.jpg?quality=90&webp=true&resize=700,636' }, 
+                        affogato: { name: "Affogato", needs: ['iceCream'], imageUrl: 'https://www.insidetherustickitchen.com/wp-content/uploads/2018/07/Affogat-step-4-740x1110-inside-the-rustic-kitchen.jpg' } 
+                    }, 
+                    cocktails: { 
+                        espressoMartini: { name: "Espresso Martini", needs: ['spirit', 'liqueur'], imageUrl: 'https://takestwoeggs.com/wp-content/uploads/2021/12/The-Best-Espresso-Martini-Takestwoeggs-Final-SQ.jpg' }, 
+                        irishCoffee: { name: "Irish Coffee", needs: ['spirit'], imageUrl: 'https://espressocoffeeguide.com/wp-content/uploads/2022/08/baileys-irish-coffee.jpg' }, 
+                        caffeCorretto: { name: "Caffè Corretto", needs: ['liqueur'], imageUrl: 'https://mybartender.com/wp-content/uploads/2024/04/Caffe-Corretto-758x758.png' }, 
+                        affogatoCocktail: { name: "Affogato Cocktail", needs: ['iceCream', 'liqueur'], imageUrl: 'https://www.bcliquorstores.com/sites/default/files/recipe/CoffeCocktails-Affogato.jpg' } 
+                    } 
+                };
+                const nutritionalData = { single: 64, double: 128 };
+                const category = ref('hot'), drinkKey = ref(null), shot = ref('double'), extras = ref({}), recipeGenerated = ref(false), generatedRecipe = ref(null);
+                const availableDrinks = computed(() => Object.entries(recipes[category.value] || {}).map(([key, value]) => ({ key, value })));
+                const currentDrink = computed(() => drinkKey.value ? recipes[category.value][drinkKey.value] : null);
+                const currentDrinkNeeds = computed(() => currentDrink.value?.needs || []);
+                const canGenerate = computed(() => drinkKey.value && shot.value && currentDrinkNeeds.value.every(need => extras.value[need]));
+                
+                watch(extras, () => { recipeGenerated.value = false; }, { deep: true });
+
+                const setCategory = (cat) => { category.value = cat; drinkKey.value = null; shot.value = 'double'; extras.value = {}; recipeGenerated.value = false; };
+                const setDrink = (key) => { drinkKey.value = key; recipeGenerated.value = false; const needs = recipes[category.value][key]?.needs || []; const defaultExtras = {}; if (needs.includes('milk')) defaultExtras['milk'] = 'whole'; if (needs.includes('iceCream')) defaultExtras['iceCream'] = 'vanilla'; if (needs.includes('spirit')) defaultExtras['spirit'] = 'Vodka'; if (needs.includes('liqueur')) defaultExtras['liqueur'] = 'Coffee Liqueur'; if (needs.includes('mixer')) defaultExtras['mixer'] = 'Tonic Water'; extras.value = defaultExtras; };
+                const setShot = (shotType) => { shot.value = shotType; recipeGenerated.value = false; };
+
+                const generateRecipe = () => { 
+                    if (!canGenerate.value) return; 
+                    const drinkData = currentDrink.value; 
+                    let caffeine = nutritionalData[shot.value]; 
+                    let steps = []; let title = drinkData.name; let info = ''; const shotText = shot.value === 'double' ? 'Double' : 'Single'; 
+                    let amounts = { milk: {oz: [4,6,7], ml: [120, 180, 210]}, cup: {oz: [6,8,10,12], ml: [180, 240, 300, 360]}, water: {oz: [4,6], ml: [120,180]}, iceCream: {g: 50}, spirit: {oz: [1.5, 2], ml: [45, 60]}, liqueur: {oz: [0.5, 0.75, 1], ml: [15,22,30]}, mixer: {oz: [5,6], ml:[150,180]}}; const u = unitSystem.value === 'imperial'; 
+                    switch (drinkKey.value) { 
+                        case 'cappuccino': title = `${shotText} Cappuccino`; steps = [`Pull a ${shot.value} shot into your ${u ? `${amounts.cup.oz[0]}-${amounts.cup.oz[1]}oz` : `${amounts.cup.ml[0]}-${amounts.cup.ml[1]}ml`} cup.`, `Steam ${u ? `${amounts.milk.oz[0]}-${amounts.milk.oz[0]+1}oz` : `${amounts.milk.ml[0]}-${amounts.milk.ml[0]+30}ml`} of cold ${extras.value.milk} milk.`, `Pour textured milk over espresso.`]; break; 
+                        case 'latte': title = `${shotText} Latte`; steps = [`Pull a ${shot.value} shot into your ${u ? `${amounts.cup.oz[2]}-${amounts.cup.oz[3]}oz` : `${amounts.cup.ml[2]}-${amounts.cup.ml[3]}ml`} cup.`, `Steam ${u ? `${amounts.milk.oz[1]}-${amounts.milk.oz[2]}oz` : `${amounts.milk.ml[1]}-${amounts.milk.ml[2]}ml`} of cold ${extras.value.milk} milk to a silky texture.`, `Pour steamed milk and finish with latte art.`]; break; 
+                        case 'flatWhite': title = `Flat White`; steps = [`Pull a ${shot.value} shot into your ${u ? `${amounts.cup.oz[0]}oz` : `${amounts.cup.ml[0]}ml`} cup.`, `Steam ${u ? `${amounts.milk.oz[0]}-${amounts.milk.oz[0]+1}oz` : `${amounts.milk.ml[0]}-${amounts.milk.ml[0]+30}ml`} of cold ${extras.value.milk} milk to a thin, velvety microfoam.`, `Pour smoothly to integrate.`]; break; 
+                        case 'macchiato': title = `Espresso Macchiato`; steps = [`Pull a ${shot.value} shot into a small espresso cup.`, `Steam a tiny amount (1-2oz) of ${extras.value.milk} milk.`, `Spoon a dollop of foam onto the espresso.`]; break; 
+                        case 'espresso': title = `${shotText} Espresso`; steps = [`Preheat your cup and portafilter.`, `Dose and tamp ${u ? '0.6oz':'18g'} of coffee grounds evenly.`, `Pull your ${shot.value} shot, aiming for 25-35 seconds.`]; break; 
+                        case 'americano': title = `${shotText} Americano`; steps = [`Fill your cup with ${u ? `${amounts.water.oz[0]}-${amounts.water.oz[1]}oz` : `${amounts.water.ml[0]}-${amounts.water.ml[1]}ml`} of hot water.`, `Pull a ${shot.value} shot of espresso over the water.`]; break; 
+                        case 'icedLatte': title = `Iced Latte`; steps = [`Fill a ${u ? `${amounts.cup.oz[3]}oz` : `${amounts.cup.ml[3]}ml`} glass with ice.`, `Pour ${u ? `${amounts.milk.oz[1]}oz` : `${amounts.milk.ml[1]}ml`} of cold ${extras.value.milk} milk over the ice.`, `Pull a ${shot.value} shot and pour over the milk.`]; break; 
+                        case 'icedAmericano': title = `Iced Americano`; steps = [`Fill a glass with ice.`, `Add ${u ? `${amounts.water.oz[0]}-${amounts.water.oz[1]}oz` : `${amounts.water.ml[0]}-${amounts.water.ml[1]}ml`} of cold, filtered water.`, `Pull a ${shot.value} shot and pour over the water.`]; break; 
+                        case 'espressoTonic': title = `Espresso Tonic`; steps = [`Fill a tall glass with ice.`, `Pour ${u ? `${amounts.mixer.oz[0]}-${amounts.mixer.oz[1]}oz` : `${amounts.mixer.ml[0]}-${amounts.mixer.ml[1]}ml`} of ${extras.value.mixer} over the ice.`, `Gently pour a ${shot.value} shot over a spoon onto the tonic.`, `Garnish with orange or lemon peel.`]; break; 
+                        case 'affogato': title = `Affogato`; steps = [`Place one scoop (~${u ? '1.8oz' : `${amounts.iceCream.g}g`}) of ${extras.value.iceCream} ice cream into a bowl.`, `Pull a fresh, hot ${shot.value} shot.`, `Immediately pour the hot espresso over the ice cream.`]; break; 
+                        case 'espressoMartini': title = `Espresso Martini`; steps = [`Chill a martini glass.`, `Fill a cocktail shaker with ice.`, `Add 1 chilled ${shot.value} shot, ${u ? `${amounts.spirit.oz[1]}oz` : `${amounts.spirit.ml[1]}ml`} ${extras.value.spirit}, and ${u ? `${amounts.liqueur.oz[0]}oz` : `${amounts.liqueur.ml[0]}ml`} ${extras.value.liqueur}.`, `Shake vigorously for 15 seconds and strain into the glass.`]; break; 
+                        case 'irishCoffee': title = `Irish Coffee`; steps = [`Preheat a glass mug.`, `Add ${u ? `${amounts.spirit.oz[0]}oz` : `${amounts.spirit.ml[0]}ml`} ${extras.value.spirit} and 1-2 tsp brown sugar.`, `Pull the ${shot.value} shot into the glass and stir.`, `Gently float a layer of lightly whipped cream on top.`]; break; 
+                        case 'caffeCorretto': title = `Caffè Corretto`; steps = [`Pull a ${shot.value} shot into an espresso cup.`, `Serve with ${u ? `${amounts.liqueur.oz[1]}oz` : `${amounts.liqueur.ml[1]}ml`} ${extras.value.liqueur} on the side, or stir it in.`]; break; 
+                        case 'affogatoCocktail': title = `Affogato Cocktail`; steps = [`Place one scoop (~${u ? '1.8oz' : `${amounts.iceCream.g}g`}) of ${extras.value.iceCream} ice cream in a bowl.`, `Pour ${u ? `${amounts.liqueur.oz[2]}oz` : `${amounts.liqueur.ml[2]}ml`} of ${extras.value.liqueur} over the ice cream.`, `Pull a fresh, hot ${shot.value} shot and pour over everything.`]; break; 
+                    } 
+                    info = `Approx. Caffeine: ${caffeine} mg`;
+                    generatedRecipe.value = { title, imageUrl: drinkData.imageUrl, info, steps, caffeine }; 
+                    recipeGenerated.value = true; 
+                };
+                
+                // --- CAFFEINE CALCULATOR STATE & LOGIC ---
+                const now = new Date();
+                const userDrinks = ref([]);
+                const consumedTime = ref({ hour: now.getHours() % 12 || 12, minute: now.getMinutes(), ampm: now.getHours() >= 12 ? 'PM' : 'AM' });
+                const bedtime = ref({ hour: 11, minute: 0, ampm: 'PM' });
+                
+                const formatTime = (timeObj) => `${timeObj.hour}:${timeObj.minute.toString().padStart(2, '0')} ${timeObj.ampm}`;
+                
+                const timeTo24 = (timeObj) => {
+                    let hour = parseInt(timeObj.hour);
+                    if (timeObj.ampm === 'PM' && hour < 12) hour += 12;
+                    if (timeObj.ampm === 'AM' && hour === 12) hour = 0;
+                    return `${hour.toString().padStart(2, '0')}:${timeObj.minute.toString().padStart(2, '0')}`;
+                };
+
+                const addCaffeineDrink = () => { 
+                    userDrinks.value.push({ 
+                        name: generatedRecipe.value.title, 
+                        caffeine: generatedRecipe.value.caffeine, 
+                        time: { ...consumedTime.value }
+                    }); 
+                };
+                const removeCaffeineDrink = (index) => { userDrinks.value.splice(index, 1); };
+
+                const totalCaffeineAtBedtime = computed(() => {
+                    const bedTime24 = timeTo24(bedtime.value);
+                    const [bedHour, bedMinute] = bedTime24.split(':').map(Number);
+                    const bedTimeDate = new Date();
+                    bedTimeDate.setHours(bedHour, bedMinute, 0, 0);
+
+                    return userDrinks.value.reduce((total, drink) => {
+                        const drinkTime24 = timeTo24(drink.time);
+                        const [drinkHour, drinkMinute] = drinkTime24.split(':').map(Number);
+                        const drinkTimeDate = new Date();
+                        drinkTimeDate.setHours(drinkHour, drinkMinute, 0, 0);
+                        
+                        let hoursUntilBed = (bedTimeDate - drinkTimeDate) / 3600000;
+                        if (hoursUntilBed < 0) { hoursUntilBed += 24; }
+
+                        return total + (drink.caffeine * Math.pow(0.5, hoursUntilBed / 5));
+                    }, 0);
+                });
+
+                const bedtimeImpact = computed(() => {
+                    const caffeine = totalCaffeineAtBedtime.value;
+                    const maxCaffeine = 50; // Threshold for significant sleep disruption
+                    const percentage = Math.min((caffeine / maxCaffeine) * 100, 100);
+                    const hue = 120 * (1 - (percentage / 100)); // 120 (green) to 0 (red)
+                    return {
+                        percentage,
+                        color: `hsl(${hue}, 70%, 50%)`
+                    };
+                });
+                
+                const feelSleepyTime = computed(() => {
+                    if (userDrinks.value.length === 0) return '--:-- --';
+                    const lastDrink = userDrinks.value[userDrinks.value.length - 1];
+                    const drinkTime24 = timeTo24(lastDrink.time);
+                    const [drinkHour, drinkMinute] = drinkTime24.split(':').map(Number);
+                    const drinkDate = new Date();
+                    drinkDate.setHours(drinkHour, drinkMinute, 0, 0);
+                    drinkDate.setHours(drinkDate.getHours() + 10); // Approx. 2 half-lives
+                    return formatTime({ hour: drinkDate.getHours() % 12 || 12, minute: drinkDate.getMinutes(), ampm: drinkDate.getHours() >= 12 ? 'PM' : 'AM' });
+                });
+                
+                const caffeineClearTime = computed(() => {
+                     if (userDrinks.value.length === 0) return '--:-- --';
+                    const lastDrink = userDrinks.value[userDrinks.value.length - 1];
+                    const hoursToClear = 5 * (Math.log(lastDrink.caffeine) / Math.log(2)); // Hours until < 1mg
+                    const drinkTime24 = timeTo24(lastDrink.time);
+                    const [drinkHour, drinkMinute] = drinkTime24.split(':').map(Number);
+                    const drinkDate = new Date();
+                    drinkDate.setHours(drinkHour, drinkMinute, 0, 0);
+                    drinkDate.setHours(drinkDate.getHours() + hoursToClear);
+                    return formatTime({ hour: drinkDate.getHours() % 12 || 12, minute: drinkDate.getMinutes(), ampm: drinkDate.getHours() >= 12 ? 'PM' : 'AM' });
+                });
+
+                onMounted(() => {
+                    gsap.registerPlugin(ScrollTrigger);
+                    const lenis = new Lenis();
+                    gsap.ticker.add((time) => { lenis.raf(time * 1000); });
+                    const cursorDot = document.querySelector('.cursor-dot');
+                    const cursorOutline = document.querySelector('.cursor-outline');
+                    gsap.set([cursorDot, cursorOutline], {xPercent: -50, yPercent: -50, opacity: 1});
+                    window.addEventListener('mousemove', e => {
+                        gsap.to(cursorDot, { duration: 0.3, x: e.clientX, y: e.clientY });
+                        gsap.to(cursorOutline, { duration: 0.7, x: e.clientX, y: e.clientY, ease: "power2.out" });
+                    });
+                    document.querySelectorAll('button, a, select, input').forEach(el => {
+                        el.addEventListener('mouseenter', () => gsap.to(cursorOutline, { scale: 1.5, duration: 0.3 }));
+                        el.addEventListener('mouseleave', () => gsap.to(cursorOutline, { scale: 1, duration: 0.3 }));
+                    });
+                    gsap.from('.main-title', { autoAlpha: 0, y: 50, duration: 1, ease: 'power3.out' });
+                    gsap.from('.main-subtitle', { autoAlpha: 0, y: 30, stagger: 0.2, duration: 0.8, ease: 'power3.out', delay: 0.2 });
+                    gsap.utils.toArray('.content-animate').forEach(content => {
+                        const title = content.querySelector('.title-animate');
+                        const text = content.querySelector('.text-animate');
+                        const list = content.querySelector('.list-animate');
+                        const tl = gsap.timeline({ scrollTrigger: { trigger: content, start: 'top 85%', toggleActions: 'play none none reverse' }});
+                        if(title) tl.from(title, { autoAlpha: 0, y: 50, duration: 0.8 });
+                        if(text) tl.from(text, { autoAlpha: 0, y: 30, duration: 0.8 }, "-=0.6");
+                        if(list) tl.from(list.children, { autoAlpha: 0, x: -30, stagger: 0.1, duration: 0.5 }, "-=0.6");
+                    });
+                    gsap.utils.toArray('.image-animate').forEach(img => {
+                         gsap.from(img, { scale: 1.1, clipPath: 'inset(40% 40% 40% 40%)', duration: 1.2, ease: 'power3.out', scrollTrigger: { trigger: img, start: 'top 90%', toggleActions: 'play none none reverse' } });
+                    });
+                    gsap.utils.toArray('.card-stagger').forEach(container => {
+                        gsap.from(container.children, { scrollTrigger: { trigger: container, start: 'top 85%', toggleActions: 'play none none reverse' }, autoAlpha: 0, y: 50, stagger: 0.1, duration: 0.8, ease: 'power3.out' });
+                    });
+                    gsap.utils.toArray('section[data-bgcolor]').forEach(section => {
+                        ScrollTrigger.create({ trigger: section, start: 'top 50%', end: 'bottom 50%', onEnter: () => gsap.to('body', { backgroundColor: section.dataset.bgcolor, duration: 1.0 }), onEnterBack: () => gsap.to('body', { backgroundColor: section.dataset.bgcolor, duration: 1.0 }) });
+                    });
+                });
+                
+                return { unitSystem, setUnitSystem, category, drinkKey, shot, extras, recipeGenerated, generatedRecipe, availableDrinks, currentDrinkNeeds, canGenerate, setCategory, setDrink, setShot, generateRecipe, userDrinks, bedtime, consumedTime, addCaffeineDrink, removeCaffeineDrink, caffeineAtBedtime: totalCaffeineAtBedtime, formatTime, bedtimeImpact, feelSleepyTime, caffeineClearTime };
+            }
+        });
+        app.mount('#app');
+    });
+    </script>
+</body>
+</html>
+
